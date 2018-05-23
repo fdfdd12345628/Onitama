@@ -402,17 +402,20 @@ void print_board(const struct Game game) {
 	}
 }
 
-struct Game change_player(const struct Game original) {
-	struct Game result;
+void change_player(struct Game *original) {
+	int temp[5][5];
 	for (int i = 0; i < 25; i++) {
-		result.board[i / 5][i % 5] = original.board[4 - (i / 5)][4 - (i % 5)];
+		temp[i / 5][i % 5] = original->board[4 - (i / 5)][4 - (i % 5)];
 	}
-	result.current_player = - original.current_player;
-	result.enemy_card[0] = original.enemy_card[0];
-	result.enemy_card[1] = original.enemy_card[1];
-	result.our_card[0] = original.our_card[0];
-	result.our_card[1] = original.our_card[1];
-	result.wild_card = original.wild_card;
+	for (int i = 0; i < 25; i++) {
+		original->board[i / 5][i % 5] = temp[i / 5][i % 5];
+	}
+	original->current_player = -original->current_player;
+	original->enemy_card[0] = original->enemy_card[0];
+	original->enemy_card[1] = original->enemy_card[1];
+	original->our_card[0] = original->our_card[0];
+	original->our_card[1] = original->our_card[1];
+	original->wild_card = original->wild_card;
 }
 
 int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for x, [n][1] for y, [0] for initial, [1] for final
@@ -428,6 +431,7 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 							if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
 								continue;
 							}
+							if (game.board[x + (cardx - 2)][y + (cardy - 2)] * game.current_player > 0) continue;
 							able[index][0][0] = x;
 							able[index][0][1] = y;
 							able[index][1][0] = x + (cardx - 2);
@@ -447,6 +451,7 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 								if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
 									continue;
 								}
+								if (game.board[x + (cardx - 2)][y + (cardy - 2)] * game.current_player > 0) continue;
 								able[index][0][0] = x;
 								able[index][0][1] = y;
 								able[index][1][0] = x + (cardx - 2);
@@ -460,6 +465,7 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 								if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
 									continue;
 								}
+								if (game.board[x + (cardx - 2)][y + (cardy - 2)] * game.current_player > 0) continue;
 								able[index][0][0] = x;
 								able[index][0][1] = y;
 								able[index][1][0] = x + (cardx - 2);
@@ -491,6 +497,7 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 								if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
 									continue;
 								}
+								if (game.board[x + (cardx - 2)][y + (cardy - 2)] * game.current_player < 0) continue;
 								able[index][0][0] = x;
 								able[index][0][1] = y;
 								able[index][1][0] = x + (cardx - 2);
@@ -560,33 +567,33 @@ void player_move(struct Game* game) {
 			printf("Input again!\n");
 			continue;
 		}
-		printf("%x", game);
 		start_end[0][0] = command[1][7] - '0'-1;
 		start_end[0][1] = command[1][9] - '0'-1;
 		if (command[2][5] - '0' < 1 || command[2][5] - '0' > 5 || command[2][7] - '0' < 1 || command[2][7] - '0' > 5) {
 			printf("Input again!\n");
 			continue;
 		}
-		printf("%x", game);
 		start_end[1][0] = command[2][5] - '0'-1;
 		start_end[1][1] = command[2][7] - '0'-1;
 		//end of parsing & checking
 
-		game_body* temp = game;
+		//game_body* temp = game;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (int i = 0; i < 160; i++) {
-			able[0][i / 4][i / 2][i % 2] = -1;
-			able[1][i / 4][i / 2][i % 2] = -1;
+		for (int i = 0; i < 40; i++) {
+			for (int j = 0; j < 4; j++) {
+				able[0][i][j / 2][j % 2] = -1;
+				able[1][i][j / 2][j % 2] = -1;
+			}
+			
 		}
-		printf("%x", game);
 		for (int card = 0; card < 2; card++) {
 			all_move(*game, able[card], game->our_card[card]);
 		}
-		int all_possible = 0, possible=0;
+		int possible=0;
 		for (int i = 0; i < 40; i++) {
 			//if end of possible
 			if (able[selected_card][i][0][0] == -1) break;
-
+			int all_possible = 0;
 			for (int j = 0; j < 4; j++) {//check start & end
 				if (able[selected_card][i][j / 2][j % 2] == start_end[j / 2][j % 2]) all_possible++;
 			}
@@ -600,6 +607,10 @@ void player_move(struct Game* game) {
 			game->board[start_end[0][0]][start_end[0][1]] = 0;
 			game->board[start_end[1][0]][start_end[1][1]] = role;
 			return;
+		}
+		else {
+			printf("Can't move! Input again!\n");
+			continue;
 		}
 	}
 }
@@ -634,7 +645,7 @@ void UI() {
 				input[i] = 0;
 			}
 			player_move(&main_game);//first player
-			main_game = change_player(main_game);//change board
+			change_player(&main_game);//change board
 			int win = win_game(main_game);
 			if (win) {
 				printf("Player %d win!\n", win);
@@ -651,5 +662,25 @@ void test() {
 	game_body game;
 	initial(&game, NULL);
 	print_board(game);
-	//system("PAUSE");
+	int able[2][40][2][2] = { 0 };
+	for (int i = 0; i < 40; i++) {
+		for (int j = 0; j < 4; j++) {
+			able[0][i][j / 2][j % 2] = -1;
+			able[1][i][j / 2][j % 2] = -1;
+		}
+	}
+	all_move(game, able[0], game.our_card[0]);
+	all_move(game, able[1], game.our_card[1]);
+	char name[40];
+	printf("Use card %s\n", index_to_name(game.our_card[0], name));
+	for (int i = 0; i < 40; i++) {
+		if (able[0][i][0][0] == -1) break;
+		printf("Start (%d,%d), End (%d,%d)\n", able[0][i][0][0], able[0][i][0][1], able[0][i][1][0], able[0][i][1][1]);
+	}
+	printf("Use card %s\n", index_to_name(game.our_card[1], name));
+	for (int i = 0; i < 40; i++) {
+		if (able[1][i][0][0] == -1) break;
+		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
+	}
+	system("PAUSE");
 }
