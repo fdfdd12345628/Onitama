@@ -137,7 +137,7 @@ const int Turtle[2][5][5] = {
 
 	0,0,0,0,0,
 	0,0,0,0,0,
-	0,0,0,1,0,
+	0,1,0,0,0,
 	0,0,0,0,0,
 	0,0,0,0,0
 };
@@ -150,6 +150,39 @@ typedef struct Game
 	int wild_card;
 	int enemy_card[2];
 }game_body;
+
+char* readRepository(char *filename)
+{
+	/*
+	* Input: absolute file path (file name if it is in the same directory with the file)
+	* Ouput: contents of the file
+	* Read the whole content of a specified file with its name and return the content
+	* as a string pointer
+	*
+	*
+	*/
+	FILE *fp;
+	char temp[1000];
+	char *return_string = "";
+	fp = fopen(filename, "r");
+
+	if (fp == NULL) {
+		printf("Can't open file\n");
+	}
+
+	char *temp3 = "";
+	while (fgets(temp, 1000, fp) != NULL)
+	{
+		return_string = malloc((strlen(temp) + strlen(return_string)) * sizeof(char));
+		strcpy(return_string, temp3);
+		temp3 = malloc((strlen(temp) + strlen(temp3)) * sizeof(char));
+		strcat(return_string, temp);
+		strcpy(temp3, return_string);
+	}
+
+	fclose(fp);
+	return return_string;
+}
 
 int name_to_index(char* name) {
 	if (!strcmp(name, "Rabbit")) return 1;
@@ -288,8 +321,8 @@ int* index_to_area(int index, int area[2][5][5]) {
 	return area;
 }
 
-void initial(struct Game* game, FILE* file) {
-	if (file == NULL) {//UI, training mode
+void initial(struct Game* game, char* file_name) {
+	if (file_name == NULL) {//UI, training mode
 		int temp_board[5][5] = {
 			1,0,0,0,-1,
 			1,0,0,0,-1,
@@ -346,8 +379,148 @@ void initial(struct Game* game, FILE* file) {
 		for (int i = 0; i < 25; i++) {
 			game->board[i / 5][i % 5] = temp_board[i / 5][i % 5];
 		}
+		//start prasing file
+		char* original;
+
+		original = readRepository(file_name);
+		char file_content[100][100];
+		int file_index = 0;
+		int each_char = 0;
+		file_index = 0;
+		int line = 0;
+		for (;; each_char++) {
+			if (*(original + sizeof(*original)*file_index) == '\n') {
+				file_content[line][each_char] = '\0';
+				each_char = 0;
+				file_index++;
+				line++;
+				continue;
+			}
+			else if (*(original + sizeof(*original)*file_index) == '\0') {
+				file_content[line][each_char] = '\0';
+				break;
+			}
+			else if (*(original + sizeof(*original)*file_index) == '\r') {
+				file_index++;
+				continue;
+			}
+			else {
+				file_content[line][each_char] = *(original + sizeof(*original)*file_index);
+				file_index++;
+				continue;
+			}
+		}
+		//end of prasing file
+		int player = 0;
+		if (strcmp(file_content[0] + 7, "Red")) {
+			player = 1;
+		}
+		else {
+			player = -1;
+		}
+		//prasing RedCard
+		int original_card[3][2] = { 0 };//[0] for red, [1] for black, [2] for wild
+		char temp[2][20] = { 0 };
+		int char_index = 0;
+		int card_index = 0;
+		for (int index = 8;; index++) {//red card
+			if (*(file_content[2] + index) == ',') {
+				temp[card_index][char_index] = '\0';
+				card_index++;
+				char_index++;
+				continue;
+			}
+			if (*(file_content[2] + index) == '\0') {
+				temp[card_index][char_index] = '\0';
+				break;
+			}
+			else {
+				temp[card_index][char_index] = *(file_content[2] + index);
+				char_index++;
+			}
+		}
+		original_card[0][0] = name_to_index(temp[0]);
+		original_card[0][1] = name_to_index(temp[1]);
+		//end of red card
+		char_index = 0;
+		card_index = 0;
+		for (int index = 8;; index++) {//black card
+			if (*(file_content[3] + index) == ',') {
+				temp[card_index][char_index] = '\0';
+				card_index++;
+			}
+			if (*(file_content[3] + index) == '\0') {
+				temp[card_index][char_index] = '\0';
+				break;
+			}
+			else {
+				temp[card_index][char_index] = *(file_content[2] + index);
+				char_index++;
+			}
+		}
+		original_card[1][0] = name_to_index(temp[0]);
+		original_card[1][1] = name_to_index(temp[1]);
+		//end of black card
+		original_card[2][0] = name_to_index(file_content[5] + 11);//public card
+		//putting card
+		if (player == 1) {
+			game->our_card[0] = original_card[0][0];
+			game->our_card[1] = original_card[0][1];
+			game->enemy_card[0] = original_card[1][0];
+			game->enemy_card[1] = original_card[1][1];
+			game->wild_card = original_card[2][0];
+		}
+		else {
+			game->our_card[0] = original_card[1][0];
+			game->our_card[1] = original_card[1][1];
+			game->enemy_card[0] = original_card[0][0];
+			game->enemy_card[1] = original_card[0][1];
+			game->wild_card = original_card[2][0];
+		}
+		//end of putting card
+
+		//[0] for red, [n][0] for main_pawn , [n][n][0] for x
+		int temp_place[2][6][2];
+		for (int i = 0; i < 12; i++) {
+			temp_place[0][i / 2][i % 2] = -1;
+			temp_place[0][i / 2][i % 2] = -1;
+		}
+		temp_place[0][0][0] = *(file_content[5] + 12) - '1' - 1;
+		temp_place[0][0][1] = *(file_content[5] + 14) - '1' - 1;
+		temp_place[1][0][0] = *(file_content[7] + 14) - '1' - 1;
+		temp_place[1][0][1] = *(file_content[7] + 16) - '1' - 1;
+		char_index = 0;
+		for (int index = 1; index < 6;) {
+			if (*(file_content[6] + char_index) == '(') {
+				temp_place[0][index][0] = *(file_content[6] + char_index + 1) - '1' - 1;
+				temp_place[0][index][0] = *(file_content[6] + char_index + 3) - '1' - 1;
+				index++;
+			}
+			else if (*(file_content[6] + char_index) == '\0') break;
+			char_index++;
+		}
+		char_index = 0;
+		for (int index = 1; index < 6;) {
+			if (*(file_content[8] + char_index) == '(') {
+				temp_place[1][index][0] = *(file_content[8] + char_index + 1) - '1' - 1;
+				temp_place[1][index][0] = *(file_content[8] + char_index + 3) - '1' - 1;
+				index++;
+			}
+			else if (*(file_content[8] + char_index) == '\0') break;
+			char_index++;
+		}
+		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
+		for (int i = 1; i < 6; i++) {
+			game->board[temp_place[0][i][0]][temp_place[0][i][1]] = 1*player;
+		}
+		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
+		for (int i = 1; i < 6; i++) {
+			game->board[temp_place[0][i][0]][temp_place[0][i][1]] = 1*player;
+		}
+		game->current_player = 1;
 	}
 }
+
 
 void print_board(const struct Game game) {
 	for (int i = 0; i < 25; i++) {
@@ -403,6 +576,7 @@ void print_board(const struct Game game) {
 }
 
 void change_player(struct Game *original) {
+	game_body temp_game = *original;
 	int temp[5][5];
 	for (int i = 0; i < 25; i++) {
 		temp[i / 5][i % 5] = original->board[4 - (i / 5)][4 - (i % 5)];
@@ -410,12 +584,12 @@ void change_player(struct Game *original) {
 	for (int i = 0; i < 25; i++) {
 		original->board[i / 5][i % 5] = temp[i / 5][i % 5];
 	}
-	original->current_player = -original->current_player;
-	original->enemy_card[0] = original->enemy_card[0];
-	original->enemy_card[1] = original->enemy_card[1];
-	original->our_card[0] = original->our_card[0];
-	original->our_card[1] = original->our_card[1];
-	original->wild_card = original->wild_card;
+	original->current_player = -temp_game.current_player;
+	original->enemy_card[0] = temp_game.our_card[0];
+	original->enemy_card[1] = temp_game.our_card[1];
+	original->our_card[0] = temp_game.enemy_card[0];
+	original->our_card[1] = temp_game.enemy_card[1];
+	original->wild_card = temp_game.wild_card;
 }
 
 int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for x, [n][1] for y, [0] for initial, [1] for final
@@ -616,15 +790,19 @@ void player_move(struct Game* game) {
 }
 
 void computer_move(struct Game* game) {
-
+	
 }
 
 void UI();
+void AI(int argc, char* args[]);
 void test();
 
 int main(int argc, char *argv[]) {
-	test();
-	UI();
+	
+	//test();
+	//UI();
+	//argc = 4;
+	AI(argc, argv);
 	return 0;
 }
 
@@ -658,9 +836,15 @@ void UI() {
 	}
 }
 
+void AI(int argc, char* args[]) {
+	
+	system("PAUSE");
+}
+
 void test() {
 	game_body game;
 	initial(&game, NULL);
+	game.our_card[0] = 15;
 	print_board(game);
 	int able[2][40][2][2] = { 0 };
 	for (int i = 0; i < 40; i++) {
@@ -682,5 +866,28 @@ void test() {
 		if (able[1][i][0][0] == -1) break;
 		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
 	}
+	printf("\n");
+	change_player(&game);
+	print_board(game);
+	for (int i = 0; i < 40; i++) {
+		for (int j = 0; j < 4; j++) {
+			able[0][i][j / 2][j % 2] = -1;
+			able[1][i][j / 2][j % 2] = -1;
+		}
+	}
+	all_move(game, able[0], game.our_card[0]);
+	all_move(game, able[1], game.our_card[1]);
+	//char name[40];
+	printf("Use card %s\n", index_to_name(game.our_card[0], name));
+	for (int i = 0; i < 40; i++) {
+		if (able[0][i][0][0] == -1) break;
+		printf("Start (%d,%d), End (%d,%d)\n", able[0][i][0][0], able[0][i][0][1], able[0][i][1][0], able[0][i][1][1]);
+	}
+	printf("Use card %s\n", index_to_name(game.our_card[1], name));
+	for (int i = 0; i < 40; i++) {
+		if (able[1][i][0][0] == -1) break;
+		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
+	}
+	printf("\n");
 	system("PAUSE");
 }
