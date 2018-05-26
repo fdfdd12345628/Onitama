@@ -1,3 +1,13 @@
+Player Black
+Round 2
+RedCard Horse,Tiger
+BlackCard Boar,Dragon
+PublicCard Monkey
+RedOnmyoji (3,4)
+RedShikigami (5,5) (4,5) (2,5) (1,5)
+BlackOnmyoji (4,2)
+BlackShikigami (5,1) (4,1) (2,1) (1,1)
+
 Player Red
 Round 2
 RedCard Horse,Tiger

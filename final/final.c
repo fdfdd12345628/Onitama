@@ -391,7 +391,7 @@ void initial(struct Game* game, char* file_name) {
 		for (;; each_char++) {
 			if (*(original + sizeof(*original)*file_index) == '\n') {
 				file_content[line][each_char] = '\0';
-				each_char = 0;
+				each_char = -1;
 				file_index++;
 				line++;
 				continue;
@@ -412,7 +412,7 @@ void initial(struct Game* game, char* file_name) {
 		}
 		//end of prasing file
 		int player = 0;
-		if (strcmp(file_content[0] + 7, "Red")) {
+		if (strcmp(file_content[0] + sizeof(file_content[0][0])*7, "Red")==0) {
 			player = 1;
 		}
 		else {
@@ -427,7 +427,7 @@ void initial(struct Game* game, char* file_name) {
 			if (*(file_content[2] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
-				char_index++;
+				char_index = 0;
 				continue;
 			}
 			if (*(file_content[2] + index) == '\0') {
@@ -442,26 +442,31 @@ void initial(struct Game* game, char* file_name) {
 		original_card[0][0] = name_to_index(temp[0]);
 		original_card[0][1] = name_to_index(temp[1]);
 		//end of red card
+
 		char_index = 0;
 		card_index = 0;
-		for (int index = 8;; index++) {//black card
+		for (int index = 10;; index++) {//black card
 			if (*(file_content[3] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
+				char_index = 0;
+				continue;
 			}
 			if (*(file_content[3] + index) == '\0') {
 				temp[card_index][char_index] = '\0';
 				break;
 			}
 			else {
-				temp[card_index][char_index] = *(file_content[2] + index);
+				temp[card_index][char_index] = *(file_content[3] + index);
 				char_index++;
 			}
 		}
 		original_card[1][0] = name_to_index(temp[0]);
 		original_card[1][1] = name_to_index(temp[1]);
 		//end of black card
-		original_card[2][0] = name_to_index(file_content[5] + 11);//public card
+
+		original_card[2][0] = name_to_index(file_content[4] + 11);//public card
+
 		//putting card
 		if (player == 1) {
 			game->our_card[0] = original_card[0][0];
@@ -483,17 +488,18 @@ void initial(struct Game* game, char* file_name) {
 		int temp_place[2][6][2];
 		for (int i = 0; i < 12; i++) {
 			temp_place[0][i / 2][i % 2] = -1;
-			temp_place[0][i / 2][i % 2] = -1;
+			temp_place[1][i / 2][i % 2] = -1;
 		}
-		temp_place[0][0][0] = *(file_content[5] + 12) - '1' - 1;
-		temp_place[0][0][1] = *(file_content[5] + 14) - '1' - 1;
-		temp_place[1][0][0] = *(file_content[7] + 14) - '1' - 1;
-		temp_place[1][0][1] = *(file_content[7] + 16) - '1' - 1;
+		temp_place[0][0][0] = *(file_content[5] + 12) - '1';
+		temp_place[0][0][1] = *(file_content[5] + 14) - '1';
+		temp_place[1][0][0] = *(file_content[7] + 14) - '1';
+		temp_place[1][0][1] = *(file_content[7] + 16) - '1';
 		char_index = 0;
 		for (int index = 1; index < 6;) {
 			if (*(file_content[6] + char_index) == '(') {
-				temp_place[0][index][0] = *(file_content[6] + char_index + 1) - '1' - 1;
-				temp_place[0][index][0] = *(file_content[6] + char_index + 3) - '1' - 1;
+				temp_place[0][index][0] = *(file_content[6] + char_index + 1) - '1';
+				temp_place[0][index][1] = *(file_content[6] + char_index + 3) - '1';
+				char_index++;
 				index++;
 			}
 			else if (*(file_content[6] + char_index) == '\0') break;
@@ -502,8 +508,9 @@ void initial(struct Game* game, char* file_name) {
 		char_index = 0;
 		for (int index = 1; index < 6;) {
 			if (*(file_content[8] + char_index) == '(') {
-				temp_place[1][index][0] = *(file_content[8] + char_index + 1) - '1' - 1;
-				temp_place[1][index][0] = *(file_content[8] + char_index + 3) - '1' - 1;
+				temp_place[1][index][0] = *(file_content[8] + char_index + 1) - '1';
+				temp_place[1][index][1] = *(file_content[8] + char_index + 3) - '1';
+				char_index++;
 				index++;
 			}
 			else if (*(file_content[8] + char_index) == '\0') break;
@@ -511,11 +518,13 @@ void initial(struct Game* game, char* file_name) {
 		}
 		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
 		for (int i = 1; i < 6; i++) {
+			if (temp_place[0][i][0] == -1)break;
 			game->board[temp_place[0][i][0]][temp_place[0][i][1]] = 1*player;
 		}
-		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
+		game->board[temp_place[1][0][0]][temp_place[1][0][1]] = -2*player;
 		for (int i = 1; i < 6; i++) {
-			game->board[temp_place[0][i][0]][temp_place[0][i][1]] = 1*player;
+			if (temp_place[1][i][0] == -1)break;
+			game->board[temp_place[1][i][0]][temp_place[1][i][1]] = -1*player;
 		}
 		game->current_player = 1;
 	}
@@ -789,6 +798,28 @@ void player_move(struct Game* game) {
 	}
 }
 
+/*
+01 function alphabeta(node, depth, alpha, beta, maximizingPlayer) is
+02     if depth = 0 or node is a terminal node then
+03         return the heuristic value of node
+04     if maximizingPlayer then
+05         v := -INF
+06         for each child of node do
+07             v := max(v, alphabeta(child, depth - 1, alpha, beta, FALSE))
+08             alpha := max(alpha, v)
+09             if beta ? alpha then
+10                 break (* beta cut-off *)
+11         return v
+12     else
+13         v := +INF
+14         for each child of node do
+15             v := min(v, alphabeta(child, depth - 1, alpha, beta, TRUE))
+16             beta := min(beta, v)
+17             if beta ? alpha then
+18                 break (* alpha cut-off *)
+19         return v
+*/
+
 void computer_move(struct Game* game) {
 	
 }
@@ -837,7 +868,9 @@ void UI() {
 }
 
 void AI(int argc, char* args[]) {
-	
+	game_body main_game;
+	initial(&main_game, args[1]);
+	print_board(main_game);
 	system("PAUSE");
 }
 
