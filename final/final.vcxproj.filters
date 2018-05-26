@@ -15,13 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="final.c">
-      <Filter>資源檔</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="log.txt" />
     <Text Include="step.txt" />
     <Text Include=".\game.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="final.c">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
