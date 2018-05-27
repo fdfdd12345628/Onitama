@@ -833,6 +833,24 @@ void player_move(struct Game* game) {
 
 int value_of_game(const game_body game) {
 	int win = 0;
+	if (game.current_player == 1) {
+		if (game.board[2][4] == 2) {
+		win = 1;
+		}
+		else if (game.board[2][0] == -2)
+		{
+		win = -1;
+		}
+	}
+	else {
+		if (game.board[2][4] == 2) {
+		win = -1;
+		}
+		else if (game.board[2][0] == -2)
+		{
+		win = 1;
+		}
+	}
 	/*if (game.board[2][4] == 2) {
 		win = 1;
 	}
@@ -842,9 +860,9 @@ int value_of_game(const game_body game) {
 	}*/
 	switch (win) {
 	case 1:
-		return 100;
+		return 100 + rand() % 5;
 	case -1:
-		return -100;
+		return -100 + rand() % 5;
 	default:
 		break;
 	}
@@ -871,8 +889,8 @@ int value_of_game(const game_body game) {
 			break;
 		}
 	}
-	if (!our_main) return -100;
-	else if (!enemy_main) return 100;
+	if (!our_main) return -100 + rand() % 5;
+	else if (!enemy_main) return 100 + rand() % 5;
 	else return our_man-enemy_man;
 }
 
@@ -905,7 +923,7 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		int value = value_of_game(game);
 		return value;
 	}
-	int v = win_game(game);
+	int v = value_of_game(game);
 	if (v == 100) return 100;
 	else if (v == -100) return -100;
 	//out of time break
