@@ -604,6 +604,17 @@ void print_board(const struct Game game) {
 	}
 }
 
+void print_board_min(const game_body game) {
+	int i, j;
+	for (i = 0; i < 25; i++) {
+		if (game.board[i % 5][4 - (i / 5)] < 0)
+			printf("%d ", game.board[i % 5][4 - (i / 5)]);
+		else
+			printf(" %d ", game.board[i % 5][4 - (i / 5)]);
+		if (i % 5 == 4) printf("\n");
+	}
+}
+
 void change_player(struct Game *original) {
 	game_body temp_game = *original;
 	int temp[5][5];
@@ -843,10 +854,10 @@ int value_of_game(const game_body game) {
 		}
 	}
 	else {
-		if (game.board[2][4] == 2) {
+		if (game.board[2][4] == -2) {
 		win = -1;
 		}
-		else if (game.board[2][0] == -2)
+		else if (game.board[2][0] == 2)
 		{
 		win = 1;
 		}
@@ -860,9 +871,9 @@ int value_of_game(const game_body game) {
 	}*/
 	switch (win) {
 	case 1:
-		return 100 + rand() % 5;
+		return 100;
 	case -1:
-		return -100 + rand() % 5;
+		return -100;
 	default:
 		break;
 	}
@@ -889,8 +900,8 @@ int value_of_game(const game_body game) {
 			break;
 		}
 	}
-	if (!our_main) return -100 + rand() % 5;
-	else if (!enemy_main) return 100 + rand() % 5;
+	if (!our_main) return -100;
+	else if (!enemy_main) return 100;
 	else return our_man-enemy_man;
 }
 
@@ -923,11 +934,19 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		int value = value_of_game(game);
 		return value;
 	}
+	
 	int v = value_of_game(game);
-	if (v == 100) return 100;
-	else if (v == -100) return -100;
+	if (v == 100) return v + 10;
+	else if (v == -100) return v - 10;
+	
+	//int v = value_of_game(game);
+	//if (v == 100 || v == -100) return v;
+	//int v = value_of_game(game);
+	//if (v >= 50 || v <= 50) 
+	//	return v;
+	//else if (v <= -50) return v;
 	//out of time break
-	if (clock() / CLOCKS_PER_SEC > 4) return 0;
+	//if (clock() / CLOCKS_PER_SEC > 4) return 0;
 	int i, j, card;
 
 	change_player(&game);
@@ -956,6 +975,9 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 				//temp = game.wild_card;
 				next_node.wild_card = game.our_card[card];
 				next_node.our_card[card] = game.wild_card;
+				//int v = value_of_game(next_node);
+				//if (v >= 50 || v <= -50) 
+				//	return v;
 				//print_board(next_node);
 				temp = alpha_beta(next_node, depth - 1, alpha, beta, 0);
 				//v := max(v, alphabeta(child, depth - 1, alpha, beta, FALSE))
@@ -995,6 +1017,9 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 				next_node.board[able[card][i][1][0]][able[card][i][1][1]] =
 					game.board[able[card][i][0][0]][able[card][i][0][1]];
 				next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
+				//int v = value_of_game(next_node);
+				//if (v >= 50 || v <= -50) 
+				//	return v;
 				//print_board(next_node);
 				temp = alpha_beta(next_node, depth - 1, alpha, beta, 1);
 				value = (temp < value) ? temp : value;
@@ -1006,6 +1031,8 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 			}
 			if (breaking) break;
 		}
+		if (DEPTH == depth) 
+			printf("Node value : %d\n", value);
 		return value;
 	}
 }
@@ -1086,9 +1113,8 @@ void AI(int argc, char* args[]) {
 		all_move(main_game, able[card], main_game.our_card[card]);
 	}
 	int best_index[2] = { 0 };//[0] for card, [1] for index
-	
-	game_body enemy = main_game;
-	change_player(&enemy);
+	//game_body enemy = main_game;
+	//change_player(&enemy);
 	for (card = 0; card < 2; card++) {
 		int breaking = 0;
 		for (i = 0; i < 40; i++) {
@@ -1101,11 +1127,15 @@ void AI(int argc, char* args[]) {
 			next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
 			next_node.our_card[card] = main_game.wild_card;
 			next_node.wild_card = main_game.our_card[card];
+			print_board_min(next_node);
+
 			temp = alpha_beta(next_node, DEPTH, NEGINF, INF, 0);
+			printf("temp : %d , value : %d\n", temp, value);
 			if (temp > value) {
 			value = temp;
 			best_index[0] = card;
 			best_index[1] = i;
+			printf("Card index : %d , best index move : (%d,%d), (%d,%d)\n", card, able[best_index[0]][best_index[1]][0][0], able[best_index[0]][best_index[1]][0][1], able[best_index[0]][best_index[1]][1][0], able[best_index[0]][best_index[1]][1][1]);
 			}
 			/*int win = win_game(next_node);
 			if (win > temp) {
