@@ -1,7 +1,7 @@
 Player Black
 Round 2
 RedCard Horse,Tiger
-BlackCard Boar,Dragon
+QBlackCard Boar,Dragon
 PublicCard Monkey
 RedOnmyoji (3,4)
 RedShikigami (5,5) (4,5) (2,5) (1,5)

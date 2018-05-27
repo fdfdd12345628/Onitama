@@ -5,7 +5,7 @@
 
 int total_node = 0;
 
-#define DEPTH 5
+#define DEPTH 6
 #define INF 0x7FFFFFFF
 #define NEGINF 0x80000000
 
@@ -127,11 +127,11 @@ const int Frog[2][5][5] = {
 	0,0,0,0,0,
 	0,0,0,0,0,
 
-	0,0,0,0,1,
+	0,0,0,1,0,
 	0,0,0,0,0,
 	0,0,0,0,0,
 	0,0,0,0,0,
-	0,0,0,0,1
+	0,0,0,1,0
 };
 //Turtle index : 15
 const int Turtle[2][5][5] = {
@@ -421,6 +421,10 @@ void initial(struct Game* game, char* file_name) {
 			}
 		}
 		//end of prasing file
+		for (i = 0; i < 8; i++) {
+			printf("%s\n", file_content[i]);
+		}
+
 		int player = 0;
 		if (strcmp(file_content[0] + sizeof(file_content[0][0])*7, "Red")==0) {
 			player = 1;
@@ -434,7 +438,9 @@ void initial(struct Game* game, char* file_name) {
 		int char_index = 0;
 		int card_index = 0;
 		int index;
-		for (index = 8;; index++) {//red card
+		if (file_content[2][0] != 'R') index = 9;
+		else index = 8;
+		for (;; index++) {//red card
 			if (*(file_content[2] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
@@ -456,7 +462,10 @@ void initial(struct Game* game, char* file_name) {
 
 		char_index = 0;
 		card_index = 0;
-		for (index = 10;; index++) {//black card
+		if (file_content[3][0] != 'B') index=11;
+		else index = 10;
+		for (;; index++) {//black card
+			
 			if (*(file_content[3] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
@@ -824,18 +833,27 @@ void player_move(struct Game* game) {
 
 int value_of_game(const game_body game) {
 	int win = 0;
-	if (game.board[2][4] == 2) {
+	/*if (game.board[2][4] == 2) {
 		win = 1;
 	}
 	else if (game.board[2][0] == -2)
 	{
 		win = -1;
+	}*/
+	switch (win) {
+	case 1:
+		return 100;
+	case -1:
+		return -100;
+	default:
+		break;
 	}
 	int our_main = 0, enemy_main = 0;
 	int our_man = 0, enemy_man = 0;
 	int i;
+	//int current_player = game.current_player;
 	for (i = 0; i < 25; i++) {
-		switch (game.board[i / 5][i % 5]*game.current_player)
+		switch (game.board[i / 5][i % 5])
 		{
 		case 2:
 			our_main++;
@@ -853,9 +871,9 @@ int value_of_game(const game_body game) {
 			break;
 		}
 	}
-	if (!our_main || win == -1) return -100;
-	else if (!enemy_main || win == 1) return 100;
-	return our_man-enemy_man;
+	if (!our_main) return -100;
+	else if (!enemy_main) return 100;
+	else return our_man-enemy_man;
 }
 
 /*
@@ -884,13 +902,20 @@ alphabeta(origin, depth, -INF, +INF, TRUE)
 int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_player) {
 	total_node++;
 	if (depth <= 0) {
-		return value_of_game(game);
+		int value = value_of_game(game);
+		return value;
 	}
+	int v = win_game(game);
+	if (v == 100) return 100;
+	else if (v == -100) return -100;
+	//out of time break
 	if (clock() / CLOCKS_PER_SEC > 4) return 0;
 	int i, j, card;
+
 	change_player(&game);
-	if (game.current_player == maximum_player) {
-		int value = INF;
+	if (maximum_player) {
+		//if (value_of_game(game) == 100) return 100;
+		int value = NEGINF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
 		for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
@@ -907,11 +932,16 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 				if (able[card][i][0][0] == -1) break;
 				game_body next_node = game;
 				int temp;
-				temp = next_node.board[able[card][i][0][0]][able[card][i][0][1]];
 				next_node.board[able[card][i][1][0]][able[card][i][1][1]] =
-					next_node.board[able[card][i][0][0]][able[card][i][0][1]];
-				next_node.board[able[card][i][1][0]][able[card][i][1][1]] = temp;
-				temp = alpha_beta(next_node, depth - 1, alpha, beta, -maximum_player);
+					game.board[able[card][i][0][0]][able[card][i][0][1]];
+				next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
+				//temp = game.wild_card;
+				next_node.wild_card = game.our_card[card];
+				next_node.our_card[card] = game.wild_card;
+				//print_board(next_node);
+				temp = alpha_beta(next_node, depth - 1, alpha, beta, 0);
+				//v := max(v, alphabeta(child, depth - 1, alpha, beta, FALSE))
+				//alpha := max(alpha, v)
 				value = (temp > value) ? temp : value;
 				alpha = (value > alpha) ? value : alpha;
 				
@@ -925,7 +955,8 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		return value;
 	}
 	else {
-		int value = -INF;
+		//if (value_of_game(game) == -100) return -100;
+		int value = INF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
 		for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
@@ -942,13 +973,14 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 				if (able[card][i][0][0] == -1) break;
 				game_body next_node = game;
 				int temp;
-				temp = next_node.board[able[card][i][0][0]][able[card][i][0][1]];
+				//temp = next_node.board[able[card][i][0][0]][able[card][i][0][1]];
 				next_node.board[able[card][i][1][0]][able[card][i][1][1]] =
-					next_node.board[able[card][i][0][0]][able[card][i][0][1]];
-				next_node.board[able[card][i][1][0]][able[card][i][1][1]] = temp;
-				temp = alpha_beta(next_node, depth - 1, alpha, beta, -maximum_player);
+					game.board[able[card][i][0][0]][able[card][i][0][1]];
+				next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
+				//print_board(next_node);
+				temp = alpha_beta(next_node, depth - 1, alpha, beta, 1);
 				value = (temp < value) ? temp : value;
-				alpha = (value < alpha) ? value : alpha;
+				beta = (value < beta) ? value : beta;
 				if (beta <= alpha) {
 					breaking = 1;
 					break;
@@ -969,14 +1001,14 @@ void AI(int argc, char* args[]);
 void test();
 
 int main(int argc, char *argv[]) {
-	
+	//test();
 	if (argc == 0) {
 		UI();
 	}
 	else {
 		AI(argc, argv);
-		printf("%d\n", total_node);
-		printf("Total time:%f\n", (float)clock() / CLOCKS_PER_SEC);
+		printf("Total node : %d\n", total_node);
+		printf("Total time : %f\n", (float)clock() / CLOCKS_PER_SEC);
 		return 0;
 	}
 	//test();
@@ -1021,7 +1053,7 @@ void AI(int argc, char* args[]) {
 	initial(&main_game, args[1]);
 	print_board(main_game);
 	int move[2][2] = { -1,-1,-1,-1 };
-	int value = INF;
+	int value = NEGINF;
 	int able[2][40][2][2];//[0] for first card, [1] for second card
 	int i;
 	for (i = 0; i < 40; i++) {
@@ -1036,22 +1068,34 @@ void AI(int argc, char* args[]) {
 		all_move(main_game, able[card], main_game.our_card[card]);
 	}
 	int best_index[2] = { 0 };//[0] for card, [1] for index
+	
+	game_body enemy = main_game;
+	change_player(&enemy);
 	for (card = 0; card < 2; card++) {
 		int breaking = 0;
 		for (i = 0; i < 40; i++) {
 			if (able[card][i][0][0] == -1) break;
 			game_body next_node = main_game;
-			int temp;
-			temp = next_node.board[able[card][i][0][0]][able[card][i][0][1]];
+			int temp = 0;
+			//temp = main_game.board[able[card][i][0][0]][able[card][i][0][1]];
 			next_node.board[able[card][i][1][0]][able[card][i][1][1]] =
-				next_node.board[able[card][i][0][0]][able[card][i][0][1]];
-			next_node.board[able[card][i][1][0]][able[card][i][1][1]] = temp;
-			temp = alpha_beta(next_node, DEPTH, NEGINF, INF, main_game.current_player);
+				main_game.board[able[card][i][0][0]][able[card][i][0][1]];
+			next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
+			next_node.our_card[card] = main_game.wild_card;
+			next_node.wild_card = main_game.our_card[card];
+			temp = alpha_beta(next_node, DEPTH, NEGINF, INF, 0);
 			if (temp > value) {
-				value = temp;
+			value = temp;
+			best_index[0] = card;
+			best_index[1] = i;
+			}
+			/*int win = win_game(next_node);
+			if (win > temp) {
+				temp = win;
 				best_index[0] = card;
 				best_index[1] = i;
-			}
+			}*/
+			
 
 		}
 		if (breaking) break;
@@ -1062,6 +1106,12 @@ void AI(int argc, char* args[]) {
 	output_file = fopen(args[3], "w");
 	char name[20] = { 0 };
 	index_to_name(main_game.our_card[best_index[0]], name);
+	printf("Best card index:%d", main_game.our_card[best_index[0]]);
+	printf("Use %s\n", name);
+	printf("Start (%d,%d)\n", able[best_index[0]][best_index[1]][0][0] + 1, able[best_index[0]][best_index[1]][0][1] + 1);
+	printf("End (%d,%d)\n", able[best_index[0]][best_index[1]][1][0] + 1, able[best_index[0]][best_index[1]][1][1] + 1);
+
+	//output file
 	fprintf(output_file,"Use %s\n", name);
 	fprintf(output_file, "Start (%d,%d)\n", able[best_index[0]][best_index[1]][0][0] + 1, able[best_index[0]][best_index[1]][0][1] + 1);
 	fprintf(output_file, "End (%d,%d)\n", able[best_index[0]][best_index[1]][1][0] + 1, able[best_index[0]][best_index[1]][1][1] + 1);
@@ -1119,5 +1169,7 @@ void test() {
 		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
 	}
 	printf("\n");
+	game.board[2][0] = 0;
+	printf("Win : %d\n", win_game(game));
 	system("PAUSE");
 }
