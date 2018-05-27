@@ -5,7 +5,7 @@
 
 int total_node = 0;
 
-#define DEPTH 4
+#define DEPTH 5
 #define INF 0x7FFFFFFF
 #define NEGINF 0x80000000
 
@@ -317,13 +317,15 @@ int* index_to_area(int index, int area[2][5][5]) {
 	default:
 		break;
 	}
-	for (int i = 0; i < 50; i++) {
+	int i;
+	memcpy(area, destiantion, 2 * 5 * 5 * sizeof(*destiantion));
+	/*for (i = 0; i < 50; i++) {
 		area[i / 50][i / 5][i % 5] = *(destiantion + i);
 		/*area[i / 50][i / 5][i % 5] = *(
 			destiantion + sizeof(*destiantion) * 50 * (i / 50) +
 			sizeof(*destiantion)*(i / 5) +
-			sizeof(*destiantion)*(i % 5));*/
-	}
+			sizeof(*destiantion)*(i % 5));
+	}*/
 	return area;
 }
 
@@ -336,7 +338,8 @@ void initial(struct Game* game, char* file_name) {
 			1,0,0,0,-1,
 			1,0,0,0,-1
 		};
-		for (int i = 0; i < 25; i++) {
+		int i;
+		for (i = 0; i < 25; i++) {
 			game->board[i / 5][i % 5] = temp_board[i / 5][i % 5];
 		}
 		int All_card[] = {
@@ -346,7 +349,7 @@ void initial(struct Game* game, char* file_name) {
 		};
 		srand(time(NULL));//random five card
 		//our card
-		for (int i = 0; i < 2; i++) {
+		for (i = 0; i < 2; i++) {
 			int temp_card = rand() % 15;//random card
 			if (All_card[temp_card] > 0) {//if the card is not used
 				game->our_card[i] = temp_card + 1;//*(game).our_card[i]
@@ -357,7 +360,7 @@ void initial(struct Game* game, char* file_name) {
 			}
 		}
 		//wild card
-		for (int i = 0; i < 1; i++) {
+		for (i = 0; i < 1; i++) {
 			int temp_card = rand() % 15;//random card
 			if (All_card[temp_card] > 0) {//if the card is not used
 				game->wild_card = temp_card + 1;
@@ -368,7 +371,7 @@ void initial(struct Game* game, char* file_name) {
 			}
 		}
 		//enemy card
-		for (int i = 0; i < 2; i++) {
+		for (i = 0; i < 2; i++) {
 			int temp_card = rand() % 15;//random card
 			if (All_card[temp_card] > 0) {//if the card is not used
 				game->enemy_card[i] = temp_card + 1;
@@ -382,7 +385,8 @@ void initial(struct Game* game, char* file_name) {
 	}
 	else {//battle mode
 		int temp_board[5][5] = { 0 };
-		for (int i = 0; i < 25; i++) {
+		int i;
+		for (i = 0; i < 25; i++) {
 			game->board[i / 5][i % 5] = temp_board[i / 5][i % 5];
 		}
 		//start prasing file
@@ -429,7 +433,8 @@ void initial(struct Game* game, char* file_name) {
 		char temp[2][20] = { 0 };
 		int char_index = 0;
 		int card_index = 0;
-		for (int index = 8;; index++) {//red card
+		int index;
+		for (index = 8;; index++) {//red card
 			if (*(file_content[2] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
@@ -451,7 +456,7 @@ void initial(struct Game* game, char* file_name) {
 
 		char_index = 0;
 		card_index = 0;
-		for (int index = 10;; index++) {//black card
+		for (index = 10;; index++) {//black card
 			if (*(file_content[3] + index) == ',') {
 				temp[card_index][char_index] = '\0';
 				card_index++;
@@ -492,7 +497,7 @@ void initial(struct Game* game, char* file_name) {
 
 		//[0] for red, [n][0] for main_pawn , [n][n][0] for x
 		int temp_place[2][6][2];
-		for (int i = 0; i < 12; i++) {
+		for (i = 0; i < 12; i++) {
 			temp_place[0][i / 2][i % 2] = -1;
 			temp_place[1][i / 2][i % 2] = -1;
 		}
@@ -501,7 +506,7 @@ void initial(struct Game* game, char* file_name) {
 		temp_place[1][0][0] = *(file_content[7] + 14) - '1';
 		temp_place[1][0][1] = *(file_content[7] + 16) - '1';
 		char_index = 0;
-		for (int index = 1; index < 6;) {
+		for (index = 1; index < 6;) {
 			if (*(file_content[6] + char_index) == '(') {
 				temp_place[0][index][0] = *(file_content[6] + char_index + 1) - '1';
 				temp_place[0][index][1] = *(file_content[6] + char_index + 3) - '1';
@@ -512,7 +517,7 @@ void initial(struct Game* game, char* file_name) {
 			char_index++;
 		}
 		char_index = 0;
-		for (int index = 1; index < 6;) {
+		for (index = 1; index < 6;) {
 			if (*(file_content[8] + char_index) == '(') {
 				temp_place[1][index][0] = *(file_content[8] + char_index + 1) - '1';
 				temp_place[1][index][1] = *(file_content[8] + char_index + 3) - '1';
@@ -523,12 +528,12 @@ void initial(struct Game* game, char* file_name) {
 			char_index++;
 		}
 		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
-		for (int i = 1; i < 6; i++) {
+		for (i = 1; i < 6; i++) {
 			if (temp_place[0][i][0] == -1)break;
 			game->board[temp_place[0][i][0]][temp_place[0][i][1]] = 1*player;
 		}
 		game->board[temp_place[1][0][0]][temp_place[1][0][1]] = -2*player;
-		for (int i = 1; i < 6; i++) {
+		for (i = 1; i < 6; i++) {
 			if (temp_place[1][i][0] == -1)break;
 			game->board[temp_place[1][i][0]][temp_place[1][i][1]] = -1*player;
 		}
@@ -537,7 +542,8 @@ void initial(struct Game* game, char* file_name) {
 }
 
 void print_board(const struct Game game) {
-	for (int i = 0; i < 25; i++) {
+	int i, j;
+	for (i = 0; i < 25; i++) {
 		if (game.board[i % 5][4 - (i / 5)] < 0)
 			printf("%d ", game.board[i % 5][4 - (i / 5)]);
 		else
@@ -551,7 +557,7 @@ void print_board(const struct Game game) {
 	all_card[2] = game.wild_card;
 	all_card[3] = game.enemy_card[0];
 	all_card[4] = game.enemy_card[1];
-	for (int i = 0; i < 5; i++) {
+	for (i = 0; i < 5; i++) {
 		char temp_name[20];
 		index_to_name(all_card[i], temp_name);
 		strcpy(card_name[i], temp_name);
@@ -559,7 +565,7 @@ void print_board(const struct Game game) {
 	printf("Our card : %s , %s\n", card_name[0], card_name[1]);
 	printf("Wild card : %s\n", card_name[2]);
 	printf("Enemy card : %s , %s\n", card_name[3], card_name[4]);
-	for (int i = 0; i < 5; i++) {
+	for (i = 0; i < 5; i++) {
 		char temp_name[20];
 		index_to_name(all_card[i], temp_name);
 		strcpy(card_name[i], temp_name);
@@ -567,7 +573,7 @@ void print_board(const struct Game game) {
 		int area[2][5][5] = { 0 };
 		index_to_area(all_card[i], area);
 		if (area[1][0][0] == -1) {
-			for (int j = 0; j < 25; j++) {
+			for (j = 0; j < 25; j++) {
 				printf("%d ", area[0][j % 5][4 - (j / 5)]);
 				if (j % 5 == 4) printf("\n");
 			}
@@ -575,12 +581,12 @@ void print_board(const struct Game game) {
 		else
 		{
 			printf("For minion :\n");
-			for (int j = 0; j < 25; j++) {//minion
+			for (j = 0; j < 25; j++) {//minion
 				printf("%d ", area[0][j % 5][4 - (j / 5)]);
 				if (j % 5 == 4) printf("\n");
 			}
 			printf("For main pawn :\n");
-			for (int j = 0; j < 25; j++) {//main pawn
+			for (j = 0; j < 25; j++) {//main pawn
 				printf("%d ", area[1][j % 5][4 - (j / 5)]);
 				if (j % 5 == 4) printf("\n");
 			}
@@ -592,10 +598,11 @@ void print_board(const struct Game game) {
 void change_player(struct Game *original) {
 	game_body temp_game = *original;
 	int temp[5][5];
-	for (int i = 0; i < 25; i++) {
+	int i;
+	for (i = 0; i < 25; i++) {
 		temp[i / 5][i % 5] = original->board[4 - (i / 5)][4 - (i % 5)];
 	}
-	for (int i = 0; i < 25; i++) {
+	for (i = 0; i < 25; i++) {
 		original->board[i / 5][i % 5] = temp[i / 5][i % 5];
 	}
 	original->current_player = -temp_game.current_player;
@@ -610,11 +617,12 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 	int index = 0;
 	int area[2][5][5] = { 0 };
 	index_to_area(card, area);
-	for (int x = 0; x < 5; x++) {
-		for (int y = 0; y < 5; y++) {
+	int x, y, cardx, cardy;
+	for (x = 0; x < 5; x++) {
+		for (y = 0; y < 5; y++) {
 			if (game.board[x][y] * game.current_player == 1 && card != 15) {
-				for (int cardx = 0; cardx < 5; cardx++) {
-					for (int cardy = 0; cardy < 5; cardy++) {
+				for (cardx = 0; cardx < 5; cardx++) {
+					for (cardy = 0; cardy < 5; cardy++) {
 						if (area[0][cardx][cardy]) {
 							if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
 								continue;
@@ -631,8 +639,8 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 
 			}
 			else if (game.board[x][y] * game.current_player == 2 && card != 15) {
-				for (int cardx = 0; cardx < 5; cardx++) {
-					for (int cardy = 0; cardy < 5; cardy++) {
+				for (cardx = 0; cardx < 5; cardx++) {
+					for (cardy = 0; cardy < 5; cardy++) {
 						if (area[1][0][0] == -1) {
 							//general condition
 							if (area[0][cardx][cardy]) {
@@ -665,8 +673,8 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 				}
 			}
 			else if (card == 15) {
-				for (int cardx = 0; cardx < 5; cardx++) {
-					for (int cardy = 0; cardy < 5; cardy++) {
+				for (cardx = 0; cardx < 5; cardx++) {
+					for (cardy = 0; cardy < 5; cardy++) {
 						if (game.board[x][y] * game.current_player > 0) {
 							if (area[0][cardx][cardy]) {
 								if (x + (cardx - 2) < 0 || x + (cardx - 2) > 4 || y + (cardy - 2) < 0 || y + (cardy - 2) > 4) {
@@ -715,12 +723,22 @@ int win_game(const game_body game) {
 		return -1;
 	}
 	int our_main = 0, enemy_main = 0;
-	for (int i = 0; i < 25; i++) {
-		if (game.board[i / 5][i % 5] == 2) our_main = 1;
+	int i;
+	for (i = 0; i < 25; i++) {
+		switch (game.board[i/5][i%5])
+		{
+		case 2:
+			our_main++;
+		case -2:
+			enemy_main++;
+		default:
+			break;
+		}
+		/*if (game.board[i / 5][i % 5] == 2) our_main = 1;
 		else if (game.board[i / 5][i % 5] == -2)
 		{
 			enemy_main = 1;
-		}
+		}*/
 	}
 	if (!our_main) return -1;
 	else if (!enemy_main) return 1;
@@ -731,7 +749,8 @@ void player_move(struct Game* game) {
 	char command[3][20];
 	while (1) {
 		//command initial
-		for (int i = 0; i < 60; i++) {
+		int i, j;
+		for (i = 0; i < 60; i++) {
 			command[i / 20][i % 20] = '\0';
 		}
 		gets(command[0]);
@@ -767,21 +786,22 @@ void player_move(struct Game* game) {
 
 		//game_body* temp = game;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < 4; j++) {
+		for (i = 0; i < 40; i++) {
+			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
 		}
-		for (int card = 0; card < 2; card++) {
+		int card;
+		for (card = 0; card < 2; card++) {
 			all_move(*game, able[card], game->our_card[card]);
 		}
 		int possible=0;
-		for (int i = 0; i < 40; i++) {
+		for (i = 0; i < 40; i++) {
 			//if end of possible
 			if (able[selected_card][i][0][0] == -1) break;
 			int all_possible = 0;
-			for (int j = 0; j < 4; j++) {//check start & end
+			for (j = 0; j < 4; j++) {//check start & end
 				if (able[selected_card][i][j / 2][j % 2] == start_end[j / 2][j % 2]) all_possible++;
 			}
 			if (all_possible == 4) {
@@ -803,19 +823,38 @@ void player_move(struct Game* game) {
 }
 
 int value_of_game(const game_body game) {
-	int win = win_game(game);
-	if (win) {
-		return 100 * win;
+	int win = 0;
+	if (game.board[2][4] == 2) {
+		win = 1;
 	}
+	else if (game.board[2][0] == -2)
+	{
+		win = -1;
+	}
+	int our_main = 0, enemy_main = 0;
 	int our_man = 0, enemy_man = 0;
-	for (int i = 0; i < 25; i++) {
-		if (game.current_player*game.board[i/5][i%5]>0) {
+	int i;
+	for (i = 0; i < 25; i++) {
+		switch (game.board[i / 5][i % 5]*game.current_player)
+		{
+		case 2:
+			our_main++;
+			break;
+		case -2:
+			enemy_main++;
+			break;
+		case 1:
 			our_man++;
-		}
-		else {
+			break;
+		case -1:
 			enemy_man++;
+			break;
+		default:
+			break;
 		}
 	}
+	if (!our_main || win == -1) return -100;
+	else if (!enemy_main || win == 1) return 100;
 	return our_man-enemy_man;
 }
 
@@ -847,22 +886,24 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 	if (depth <= 0) {
 		return value_of_game(game);
 	}
+	if (clock() / CLOCKS_PER_SEC > 4) return 0;
+	int i, j, card;
 	change_player(&game);
 	if (game.current_player == maximum_player) {
 		int value = INF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < 4; j++) {
+		for (i = 0; i < 40; i++) {
+			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
 		}
-		for (int card = 0; card < 2; card++) {
+		for (card = 0; card < 2; card++) {
 			all_move(game, able[card], game.our_card[card]);
 		}
-		for (int card = 0; card < 2; card++) {
+		for (card = 0; card < 2; card++) {
 			int breaking = 0;
-			for (int i = 0; i < 40 ; i++) {
+			for (i = 0; i < 40 ; i++) {
 				if (able[card][i][0][0] == -1) break;
 				game_body next_node = game;
 				int temp;
@@ -886,18 +927,18 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 	else {
 		int value = -INF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < 4; j++) {
+		for (i = 0; i < 40; i++) {
+			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
 		}
-		for (int card = 0; card < 2; card++) {
+		for (card = 0; card < 2; card++) {
 			all_move(game, able[card], game.our_card[card]);
 		}
-		for (int card = 0; card < 2; card++) {
+		for (card = 0; card < 2; card++) {
 			int breaking = 0;
-			for (int i = 0; i < 40; i++) {
+			for (i = 0; i < 40; i++) {
 				if (able[card][i][0][0] == -1) break;
 				game_body next_node = game;
 				int temp;
@@ -929,11 +970,18 @@ void test();
 
 int main(int argc, char *argv[]) {
 	
+	if (argc == 0) {
+		UI();
+	}
+	else {
+		AI(argc, argv);
+		printf("%d\n", total_node);
+		printf("Total time:%f\n", (float)clock() / CLOCKS_PER_SEC);
+		return 0;
+	}
 	//test();
 	//UI();
 	//argc = 4;
-	AI(argc, argv);
-	printf("%d", total_node);
 	return 0;
 }
 
@@ -950,7 +998,8 @@ void UI() {
 	if (mode == 1) {//PvP
 		while (1) {
 			print_board(main_game);
-			for (int i = 0; i < 20; i++) {//input renew
+			int i;
+			for (i = 0; i < 20; i++) {//input renew
 				input[i] = 0;
 			}
 			player_move(&main_game);//first player
@@ -974,19 +1023,22 @@ void AI(int argc, char* args[]) {
 	int move[2][2] = { -1,-1,-1,-1 };
 	int value = INF;
 	int able[2][40][2][2];//[0] for first card, [1] for second card
-	for (int i = 0; i < 40; i++) {
-		for (int j = 0; j < 4; j++) {
+	int i;
+	for (i = 0; i < 40; i++) {
+		int j;
+		for (j = 0; j < 4; j++) {
 			able[0][i][j / 2][j % 2] = -1;
 			able[1][i][j / 2][j % 2] = -1;
 		}
 	}
-	for (int card = 0; card < 2; card++) {
+	int card;
+	for (card = 0; card < 2; card++) {
 		all_move(main_game, able[card], main_game.our_card[card]);
 	}
 	int best_index[2] = { 0 };//[0] for card, [1] for index
-	for (int card = 0; card < 2; card++) {
+	for (card = 0; card < 2; card++) {
 		int breaking = 0;
-		for (int i = 0; i < 40; i++) {
+		for (i = 0; i < 40; i++) {
 			if (able[card][i][0][0] == -1) break;
 			game_body next_node = main_game;
 			int temp;
@@ -1011,8 +1063,8 @@ void AI(int argc, char* args[]) {
 	char name[20] = { 0 };
 	index_to_name(main_game.our_card[best_index[0]], name);
 	fprintf(output_file,"Use %s\n", name);
-	fprintf(output_file,"Start (%d,%d)\n", able[best_index[0]][best_index[1]][0][0], able[best_index[0]][best_index[1]][0][1]);
-	fprintf(output_file, "End (%d,%d)\n", able[best_index[0]][best_index[1]][1][0], able[best_index[0]][best_index[1]][1][1]);
+	fprintf(output_file, "Start (%d,%d)\n", able[best_index[0]][best_index[1]][0][0] + 1, able[best_index[0]][best_index[1]][0][1] + 1);
+	fprintf(output_file, "End (%d,%d)\n", able[best_index[0]][best_index[1]][1][0] + 1, able[best_index[0]][best_index[1]][1][1] + 1);
 
 }
 
@@ -1022,8 +1074,10 @@ void test() {
 	game.our_card[0] = 15;
 	print_board(game);
 	int able[2][40][2][2] = { 0 };
-	for (int i = 0; i < 40; i++) {
-		for (int j = 0; j < 4; j++) {
+	int i;
+	for (i = 0; i < 40; i++) {
+		int j;
+		for (j = 0; j < 4; j++) {
 			able[0][i][j / 2][j % 2] = -1;
 			able[1][i][j / 2][j % 2] = -1;
 		}
@@ -1032,20 +1086,21 @@ void test() {
 	all_move(game, able[1], game.our_card[1]);
 	char name[40];
 	printf("Use card %s\n", index_to_name(game.our_card[0], name));
-	for (int i = 0; i < 40; i++) {
+	for (i = 0; i < 40; i++) {
 		if (able[0][i][0][0] == -1) break;
 		printf("Start (%d,%d), End (%d,%d)\n", able[0][i][0][0], able[0][i][0][1], able[0][i][1][0], able[0][i][1][1]);
 	}
 	printf("Use card %s\n", index_to_name(game.our_card[1], name));
-	for (int i = 0; i < 40; i++) {
+	for (i = 0; i < 40; i++) {
 		if (able[1][i][0][0] == -1) break;
 		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
 	}
 	printf("\n");
 	change_player(&game);
 	print_board(game);
-	for (int i = 0; i < 40; i++) {
-		for (int j = 0; j < 4; j++) {
+	for (i = 0; i < 40; i++) {
+		int j;
+		for (j = 0; j < 4; j++) {
 			able[0][i][j / 2][j % 2] = -1;
 			able[1][i][j / 2][j % 2] = -1;
 		}
@@ -1054,12 +1109,12 @@ void test() {
 	all_move(game, able[1], game.our_card[1]);
 	//char name[40];
 	printf("Use card %s\n", index_to_name(game.our_card[0], name));
-	for (int i = 0; i < 40; i++) {
+	for (i = 0; i < 40; i++) {
 		if (able[0][i][0][0] == -1) break;
 		printf("Start (%d,%d), End (%d,%d)\n", able[0][i][0][0], able[0][i][0][1], able[0][i][1][0], able[0][i][1][1]);
 	}
 	printf("Use card %s\n", index_to_name(game.our_card[1], name));
-	for (int i = 0; i < 40; i++) {
+	for (i = 0; i < 40; i++) {
 		if (able[1][i][0][0] == -1) break;
 		printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
 	}
