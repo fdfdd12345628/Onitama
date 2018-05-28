@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "final", "final\final.vcxproj", "{D0C14CDB-58B2-44AD-A5D8-F0395CBD34AB}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_input|x64 = Debug_input|x64
 		Debug_input|x86 = Debug_input|x86
