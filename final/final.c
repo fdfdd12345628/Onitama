@@ -4,6 +4,7 @@
 #include<string.h>
 
 int total_node = 0;
+int out_of_time_node = 0;
 
 #define DEPTH 8
 #define INF 0x7FFFFFFF
@@ -884,9 +885,9 @@ int value_of_game(const game_body game) {
 	}*/
 	switch (win) {
 	case 1:
-		return 100;
+		return 100000;
 	case -1:
-		return -100;
+		return -100000;
 	default:
 		break;
 	}
@@ -894,8 +895,9 @@ int value_of_game(const game_body game) {
 	int our_man = 0, enemy_man = 0;
 	int i, j;
 	//int current_player = game.current_player;
-	for (i = 0; i < 25; i++) {
-		switch (game.board[i / 5][i % 5])
+	int *p ;
+	for (p = game.board; p < (&game.board)[1]; p++) {
+		switch (*p)
 		{
 		case 2:
 			our_main++;
@@ -913,9 +915,11 @@ int value_of_game(const game_body game) {
 			break;
 		}
 	}
-	if (!our_main) return -100;
-	else if (!enemy_main) return 100;
-	else return our_man-enemy_man;
+	if (!our_main) return -100000;
+	else if (!enemy_main) return 100000;
+	else if (our_man == enemy_man && (our_man + enemy_man) < 8) 
+		return 100 * (8 - (our_man + enemy_man));
+	else return 1000 * (our_man - enemy_man);
 }
 
 /*
@@ -943,17 +947,20 @@ alphabeta(origin, depth, -INF, +INF, TRUE)
 
 int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_player) {
 	total_node++;
-	if (clock() / CLOCKS_PER_SEC > 3) return 0;
+	if (clock() / CLOCKS_PER_SEC > 3) {
+		out_of_time_node++;
+		return 0;
+	}
 	if (depth <= 0) {
 		int value = value_of_game(game);
-		return value;
-		if (value == 0) return value;
-		return (value > 0) ? value + rand() % 3 : value - rand() % 3; /*- rand() % 3*/
+		//return value;
+		if (value == 0) return value + rand() % 5 - 1;
+		return (value > 0) ? value + rand() % 10 : value - rand() % 10; /*- rand() % 3*/
 	}
 	
 	int v = value_of_game(game);
-	if (v == 100) return v /*+ rand() % 5*/ + depth * 2 + rand() % 2;
-	else if (v == -100) return v /*- rand() % 5*/ - depth * 2 - rand() % 2;
+	if (v == 100000) return v /*+ rand() % 5*/ + depth * 2 + rand() % 2;
+	else if (v == -100000) return v /*- rand() % 5*/ - depth * 2 - rand() % 2;
 	
 	//int v = value_of_game(game);
 	//if (v == 100 || v == -100) return v;
@@ -970,12 +977,16 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		//if (value_of_game(game) == 100) return 100;
 		int value = NEGINF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (i = 0; i < 40; i++) {
+		int *p = able;
+		for (p = able; p < (&able)[1]; p++) {
+			*p = -1;
+		}
+		/*for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
-		}
+		}*/
 		for (card = 0; card < 2; card++) {
 			all_move(game, able[card], game.our_card[card]);
 		}
@@ -1015,12 +1026,16 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		//if (value_of_game(game) == -100) return -100;
 		int value = INF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		for (i = 0; i < 40; i++) {
+		int *p = able;
+		for (p = able; p < (&able)[1]; p++) {
+			*p = -1;
+		}
+		/*for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
-		}
+		}*/
 		for (card = 0; card < 2; card++) {
 			all_move(game, able[card], game.our_card[card]);
 		}
@@ -1037,6 +1052,8 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 				next_node.board[able[card][i][1][0]][able[card][i][1][1]] =
 					game.board[able[card][i][0][0]][able[card][i][0][1]];
 				next_node.board[able[card][i][0][0]][able[card][i][0][1]] = 0;
+				next_node.wild_card = game.our_card[card];
+				next_node.our_card[card] = game.wild_card;
 				//int v = value_of_game(next_node);
 				//if (v >= 50 || v <= -50) 
 				//	return v;
@@ -1075,7 +1092,9 @@ int main(int argc, char *argv[]) {
 	else {
 		AI(argc, argv);
 		printf("Total node : %d\n", total_node);
+		printf("Total ignored node : %d\n", out_of_time_node);
 		printf("Total time : %f\n", (float)clock() / CLOCKS_PER_SEC);
+		//system("PAUSE");
 		return 0;
 	}
 	//test();
@@ -1119,12 +1138,23 @@ void AI(int argc, char* args[]) {
 	game_body main_game;
 	initial(&main_game, args[1]);
 	print_board(main_game);
-	int move[2][2] = { -1,-1,-1,-1 };
+	
+	//int move[2][2] = { -1,-1,-1,-1 };
 	int value = NEGINF;
 	int alpha = NEGINF;
 	int beta = INF;
 	int able[2][40][2][2];//[0] for first card, [1] for second card
 	int i;
+	int total_player = 0, depth_reduce = 0;
+	for (i = 0; i < 25; i++) {
+		if (main_game.board[i / 5][i % 5] != 0) total_player++;
+	}
+	if (total_player <= 10 && total_player >= 6) {
+		depth_reduce = 1;
+	}
+	/*else if (total_player <= 4) {
+		depth_reduce = -1;
+	}*/
 	for (i = 0; i < 40; i++) {
 		int j;
 		for (j = 0; j < 4; j++) {
@@ -1155,7 +1185,7 @@ void AI(int argc, char* args[]) {
 			next_node.wild_card = main_game.our_card[card];
 			print_board_min(next_node);
 
-			temp = alpha_beta(next_node, DEPTH, alpha, beta, 0);
+			temp = alpha_beta(next_node, DEPTH - depth_reduce, alpha, beta, 0);
 			printf("temp : %d , value : %d\n", temp, value);
 			/*if (i == 0) {
 				if (temp > value && temp >= 0) {
