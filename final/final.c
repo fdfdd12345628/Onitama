@@ -6,7 +6,7 @@
 int total_node = 0;
 int out_of_time_node = 0;
 
-#define DEPTH 8
+#define DEPTH 7
 #define INF 0x7FFFFFFF
 #define NEGINF 0x80000000
 
@@ -148,6 +148,8 @@ const int Turtle[2][5][5] = {
 	0,0,0,0,0,
 	0,0,0,0,0
 };
+
+int neg_one[2][40][2][2];
 
 typedef struct Game 
 {
@@ -547,7 +549,8 @@ void initial(struct Game* game, char* file_name) {
 				char_index++;
 				index++;
 			}
-			else if (*(file_content[8] + char_index) == '\0') break;
+			else if (*(file_content[8] + char_index) == '\0') 
+				break;
 			char_index++;
 		}
 		game->board[temp_place[0][0][0]][temp_place[0][0][1]] = 2*player;
@@ -947,20 +950,21 @@ alphabeta(origin, depth, -INF, +INF, TRUE)
 
 int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_player) {
 	total_node++;
-	if (clock() / CLOCKS_PER_SEC > 3) {
-		out_of_time_node++;
-		return 0;
-	}
+	
 	if (depth <= 0) {
+		if (clock() / CLOCKS_PER_SEC > 3) {
+			out_of_time_node++;
+			return 0;
+		}
 		int value = value_of_game(game);
 		//return value;
-		if (value == 0) return value + rand() % 5 - 1;
+		if (value == 0) return value + rand() % 5 - 2;
 		return (value > 0) ? value + rand() % 10 : value - rand() % 10; /*- rand() % 3*/
 	}
 	
 	int v = value_of_game(game);
-	if (v == 100000) return v /*+ rand() % 5*/ + depth * 2 + rand() % 2;
-	else if (v == -100000) return v /*- rand() % 5*/ - depth * 2 - rand() % 2;
+	if (v == 100000) return v /*+ rand() % 5*/ + depth * 10 + rand() % 2;
+	else if (v == -100000) return v /*- rand() % 5*/ - depth * 10 - rand() % 2;
 	
 	//int v = value_of_game(game);
 	//if (v == 100 || v == -100) return v;
@@ -970,18 +974,19 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 	//else if (v <= -50) return v;
 	//out of time break
 	
-	int i, j, card;
+	int i=0, j=0, card = 0;
 
 	change_player(&game);
 	if (maximum_player) {
 		//if (value_of_game(game) == 100) return 100;
 		int value = NEGINF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		int *p = able;
+		memcpy(able, neg_one, 2 * 40 * 2 * 2 * sizeof(able[0][0][0][0]));
+		/*int *p = able;
 		for (p = able; p < (&able)[1]; p++) {
 			*p = -1;
 		}
-		/*for (i = 0; i < 40; i++) {
+		for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
@@ -1026,17 +1031,19 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		//if (value_of_game(game) == -100) return -100;
 		int value = INF;
 		int able[2][40][2][2];//[0] for first card, [1] for second card
-		int *p = able;
+		memcpy(able, neg_one, 2 * 40 * 2 * 2 * sizeof(able[0][0][0][0]));
+		/*int *p = able;
 		for (p = able; p < (&able)[1]; p++) {
 			*p = -1;
 		}
-		/*for (i = 0; i < 40; i++) {
+		for (i = 0; i < 40; i++) {
 			for (j = 0; j < 4; j++) {
 				able[0][i][j / 2][j % 2] = -1;
 				able[1][i][j / 2][j % 2] = -1;
 			}
 		}*/
 		for (card = 0; card < 2; card++) {
+			//printf("%x\n", able[card]);
 			all_move(game, able[card], game.our_card[card]);
 		}
 		for (card = 0; card < 2; card++) {
@@ -1085,7 +1092,12 @@ void test();
 
 int main(int argc, char *argv[]) {
 	//test();
+	//total initial
 	srand(time);
+	int *p = neg_one;
+	for (p = neg_one; p < (&neg_one)[1]; p++) {
+		*p = -1;
+	}
 	if (argc == 0) {
 		UI();
 	}
