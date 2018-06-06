@@ -874,9 +874,9 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 			}
 		}
 	}
-	//memcpy(able, eat, sizeof(*eat)*index_eat);
-	//memcpy(able + index_eat, no_eat, sizeof(*no_eat)*index_no_eat);
-	memcpy(able, no_eat, sizeof(*no_eat)*index_no_eat);
+	memcpy(able, eat, sizeof(*eat)*index_eat);
+	memcpy(able + index_eat, no_eat, sizeof(*no_eat)*index_no_eat);
+	//memcpy(able, no_eat, sizeof(*no_eat)*index_no_eat);
 	/*for (x = 0; x < 5; x++) {
 		for (y = 0; y < 5; y++) {
 			if (game.board[x][y] * game.current_player == 1 && card != 15) {
@@ -1177,9 +1177,9 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 			return 0;
 		}
 		int value = value_of_game(game);
-		//return value;
-		if (value == 0) return value + rand() % 5 - 2;
-		return (value > 0) ? value + rand() % 10 : value - rand() % 10; /*- rand() % 3*/
+		return value;
+		//if (value == 0) return value + rand() % 5 - 2;
+		//return (value > 0) ? value + rand() % 10 : value - rand() % 10; /*- rand() % 3*/
 	}
 	
 	int v = value_of_game(game);
@@ -1215,6 +1215,20 @@ int alpha_beta(game_body game, int depth, int alpha, int beta, int maximum_playe
 		for (card = 0; card < 2; card++) {
 			all_move(game, able[card], game.our_card[card]);
 		}
+		/*//bug
+		print_board_min(game);
+		char name[20];
+		printf("Use card %s\n", index_to_name(game.our_card[0], name));
+		for (i = 0; i < 40; i++) {
+			if (able[0][i][0][0] == -1) break;
+			printf("Start (%d,%d), End (%d,%d)\n", able[0][i][0][0], able[0][i][0][1], able[0][i][1][0], able[0][i][1][1]);
+		}
+		printf("Use card %s\n", index_to_name(game.our_card[1], name));
+		for (i = 0; i < 40; i++) {
+			if (able[1][i][0][0] == -1) break;
+			printf("Start (%d,%d), End (%d,%d)\n", able[1][i][0][0], able[1][i][0][1], able[1][i][1][0], able[1][i][1][1]);
+		}
+		*///bug
 		for (card = 0; card < 2; card++) {
 			int breaking = 0;
 			for (i = 0; i < 40 ; i++) {
@@ -1313,7 +1327,7 @@ void test();
 int main(int argc, char *argv[]) {
 	//test();
 	//total initial
-	srand(time);
+	srand(time(NULL));
 	int *p = neg_one;
 	for (p = neg_one; p < (&neg_one)[1]; p++) {
 		*p = -1;
@@ -1377,6 +1391,8 @@ void AI(int argc, char* args[]) {
 	int beta = INF;
 	int able[2][40][2][2];//[0] for first card, [1] for second card
 	int i;
+	int same_able[40][2];
+	int total_same[2] = { 0,0 };//[0] for total number, [1] for score
 	int total_player = 0, depth_reduce = 0;
 	for (i = 0; i < 25; i++) {
 		if (main_game.board[i / 5][i % 5] != 0) total_player++;
@@ -1428,8 +1444,14 @@ void AI(int argc, char* args[]) {
 				}
 				break;
 			}*/
-			
 			if (temp > value) {
+				total_same[0] = 0;
+				total_same[1] = 0;
+				int k;
+				for (k = 0; k < 40; k++) {
+					same_able[k][0] = -1;
+					same_able[k][1] = -1;
+				}
 				//first = i;
 				value = temp;
 				alpha = (alpha > value) ? alpha : value;
@@ -1437,6 +1459,15 @@ void AI(int argc, char* args[]) {
 				best_index[1] = i;
 				printf("Card index : %d , best index move : (%d,%d), (%d,%d)\n", card, able[best_index[0]][best_index[1]][0][0], able[best_index[0]][best_index[1]][0][1], able[best_index[0]][best_index[1]][1][0], able[best_index[0]][best_index[1]][1][1]);
 				printf("best card index : %d\n\n", i);
+				same_able[total_same[0]][0] = card;
+				same_able[total_same[0]][1] = i;
+				total_same[0]++;
+				total_same[1] = temp;
+			}
+			else if (temp == value) {
+				same_able[total_same[0]][0] = card;
+				same_able[total_same[0]][1] = i;
+				total_same[0]++;
 			}
 			/*int win = win_game(next_node);
 			if (win > temp) {
@@ -1454,7 +1485,12 @@ void AI(int argc, char* args[]) {
 	FILE *output_file = NULL;
 	output_file = fopen(args[3], "w");
 	char name[20] = { 0 };
-	
+	srand(time(NULL));
+	if (total_same[0] > 1) {
+		int select = rand() % total_same[0];
+		best_index[0] = same_able[select][0];
+		best_index[1] = same_able[select][1];
+	}
 	index_to_name(main_game.our_card[best_index[0]], name);
 	printf("Best card index:%d, Best place index : %d\n", main_game.our_card[best_index[0]],best_index[1]);
 	printf("Use %s\n", name);
