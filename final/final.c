@@ -6,7 +6,7 @@
 int total_node = 0;
 int out_of_time_node = 0;
 
-#define DEPTH 7
+#define DEPTH 8
 #define INF 0x7FFFFFFF
 #define NEGINF 0x80000000
 
@@ -653,11 +653,231 @@ void change_player(struct Game *original) {
 }
 
 int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for x, [n][1] for y, [0] for initial, [1] for final
-	int index = 0;
-	int area[2][5][5] = { 0 };
-	index_to_area(card, area);
-	int x, y, cardx, cardy;
-	for (x = 0; x < 5; x++) {
+	int index_eat = 0, index_no_eat = 0;
+	//int area[2][5][5];
+	//index_to_area(card, area);
+	int player = game.current_player;
+	int i, x, y, cardx, cardy;
+	int eat[40][2][2];
+	int no_eat[40][2][2];
+	if (card != 15) {
+		//able_index/5=y, able_index%5=x
+		int able_index[4];// [x / 5][x % 5] count total x
+		int total_able;
+		int special;//special = minion, out of special = main pawn
+		switch (card) {
+		case 1:
+			able_index[0] = 7;
+			able_index[1] = 16;
+			able_index[2] = 18;
+			total_able = 3;
+			special = 0;
+			break;
+		case 2:
+			able_index[0] = 6;
+			able_index[1] = 11;
+			able_index[2] = 13;
+			able_index[3] = 18;
+			total_able = 4;
+			special = 0;
+			break;
+		case 3:
+			able_index[0] = 6;
+			able_index[1] = 8;
+			able_index[2] = 16;
+			able_index[3] = 18;
+			total_able = 4;
+			special = 0;
+			break;
+		case 4:
+			able_index[0] = 6;
+			able_index[1] = 8;
+			able_index[2] = 17;
+			total_able = 3;
+			special = 0;
+			break;
+		case 5:
+			able_index[0] = 6;
+			total_able = 1;
+			special = 0;
+			break;
+		case 6:
+			able_index[0] = 11;
+			able_index[1] = 13;
+			able_index[2] = 17;
+			total_able = 3;
+			special = 0;
+			break;
+		case 7:
+			able_index[0] = 7;
+			able_index[1] = 17;
+			total_able = 2;
+			special = 0;
+			break;
+		case 8:
+			able_index[0] = 6;
+			able_index[1] = 11;
+			able_index[2] = 16;
+			total_able = 3;
+			special = 0;
+			break;
+		case 9:
+			able_index[0] = 11;
+			able_index[1] = 13;
+			able_index[2] = 16;
+			able_index[3] = 18;
+			total_able = 4;
+			special = 0;
+			break;
+		case 10:
+			able_index[0] = 16;
+			able_index[1] = 17;
+			able_index[2] = 18;
+			total_able = 3;
+			special = 0;
+			break;
+		case 11:
+			able_index[0] = 8;
+			able_index[1] = 13;
+			able_index[2] = 18;
+			total_able = 3;
+			special = 0;
+			break;
+		case 12:
+			able_index[0] = 10;
+			able_index[1] = 14;
+			able_index[2] = 17;
+			total_able = 3;
+			special = 0;
+			break;
+		case 13:
+			able_index[0] = 20;
+			able_index[1] = 24;
+			able_index[2] = 17;
+			total_able = 3;
+			special = 2;
+			break;
+		case 14:
+			able_index[0] = 17;
+			able_index[1] = 15;
+			able_index[2] = 19;
+			total_able = 3;
+			special = 1;
+			break;
+		default:
+			total_able = 0;
+			break;
+		}
+		if(!special){
+			for (i = 0; i < 25; i++) {
+				if (!game.board[i / 5][i % 5])continue;
+				if (game.board[i / 5][i % 5] * player > 0) {
+					for (x = 0; x < total_able; x++) {
+						int temp_x = i / 5 + (able_index[x] % 5 - 2);
+						int temp_y = i % 5 + (able_index[x] / 5 - 2);
+						if (temp_x < 0 || temp_x>4 || temp_y < 0 || temp_y>4) continue;
+						if (game.board[temp_x][temp_y] * player > 0)continue;
+						//if eat_able
+						if (game.board[temp_x][temp_y]) {
+							eat[index_eat][0][0] = i / 5;
+							eat[index_eat][0][1] = i % 5;
+							eat[index_eat][1][0] = temp_x;
+							eat[index_eat][1][1] = temp_y;
+							index_eat++;
+						}
+						//if cant eat
+						else {
+							no_eat[index_no_eat][0][0] = i / 5;
+							no_eat[index_no_eat][0][1] = i % 5;
+							no_eat[index_no_eat][1][0] = temp_x;
+							no_eat[index_no_eat][1][1] = temp_y;
+							index_no_eat++;
+						}
+					}
+				}
+			}
+		}
+		else {
+			for (i = 0; i < 25; i++) {
+				if (!game.board[i / 5][i % 5])continue;
+				if (game.board[i / 5][i % 5] * player == 1) {
+					for (x = 0; x < special; x++) {
+						int temp_x = i / 5 + (able_index[x] % 5 - 2);
+						int temp_y = i % 5 + (able_index[x] / 5 - 2);
+						if (temp_x < 0 || temp_x>4 || temp_y < 0 || temp_y>4) continue;
+						if (game.board[temp_x][temp_y] * player > 0)continue;
+						if (game.board[temp_x][temp_y] * player > 0)continue;
+						//if eat_able
+						if (game.board[temp_x][temp_y]) {
+							eat[index_eat][0][0] = i / 5;
+							eat[index_eat][0][1] = i % 5;
+							eat[index_eat][1][0] = temp_x;
+							eat[index_eat][1][1] = temp_y;
+							index_eat++;
+						}
+						//if cant eat
+						else {
+							no_eat[index_no_eat][0][0] = i / 5;
+							no_eat[index_no_eat][0][1] = i % 5;
+							no_eat[index_no_eat][1][0] = temp_x;
+							no_eat[index_no_eat][1][1] = temp_y;
+							index_no_eat++;
+						}
+					}
+				}
+				else if (game.board[i / 5][i % 5] * player == 2) {
+					for (x = special; x < total_able; x++) {
+						int temp_x = i / 5 + (able_index[x] % 5 - 2);
+						int temp_y = i % 5 + (able_index[x] / 5 - 2);
+						if (temp_x < 0 || temp_x>4 || temp_y < 0 || temp_y>4) continue;
+						if (game.board[temp_x][temp_y] * player > 0)continue;
+						if (game.board[temp_x][temp_y] * player > 0)continue;
+						//if eat_able
+						if (game.board[temp_x][temp_y]) {
+							eat[index_eat][0][0] = i / 5;
+							eat[index_eat][0][1] = i % 5;
+							eat[index_eat][1][0] = temp_x;
+							eat[index_eat][1][1] = temp_y;
+							index_eat++;
+						}
+						//if cant eat
+						else {
+							no_eat[index_no_eat][0][0] = i / 5;
+							no_eat[index_no_eat][0][1] = i % 5;
+							no_eat[index_no_eat][1][0] = temp_x;
+							no_eat[index_no_eat][1][1] = temp_y;
+							index_no_eat++;
+						}
+					}
+				}
+			}
+		}
+	}
+	else if (card == 15) {
+		for (x = 0; x < 25; x++) {
+			if (!game.board[x / 5][x % 5]) continue;
+			if (game.board[x / 5][x % 5] * player == 2 && (x / 5) < 4) {
+				if (game.board[x / 5][x % 5 + 1] == 0) {
+					no_eat[index_no_eat][0][0] = x / 5;
+					no_eat[index_no_eat][0][1] = x % 5;
+					no_eat[index_no_eat][1][0] = x / 5;
+					no_eat[index_no_eat][1][1] = x % 5 + 1;
+					index_no_eat++;
+				}
+			}
+			else if (game.board[x / 5][x % 5] * player == -2 && (x / 5) > 0) {
+				no_eat[index_no_eat][0][0] = x / 5;
+				no_eat[index_no_eat][0][1] = x % 5;
+				no_eat[index_no_eat][1][0] = x / 5;
+				no_eat[index_no_eat][1][1] = x % 5 - 1;
+				index_no_eat++;
+			}
+		}
+	}
+	//memcpy(able, eat, sizeof(*eat)*index_eat);
+	//memcpy(able + index_eat, no_eat, sizeof(*no_eat)*index_no_eat);
+	memcpy(able, no_eat, sizeof(*no_eat)*index_no_eat);
+	/*for (x = 0; x < 5; x++) {
 		for (y = 0; y < 5; y++) {
 			if (game.board[x][y] * game.current_player == 1 && card != 15) {
 				for (cardx = 0; cardx < 5; cardx++) {
@@ -742,8 +962,8 @@ int* all_move(const game_body game, int able[40][2][2], int card) {//[n][0] for 
 				}
 			}
 		}
-	}
-	return area;
+	}*/
+	return able;
 }
 
 int* valid_move(const struct Game game, int *current, int *destination, int card) {
@@ -1249,12 +1469,19 @@ void AI(int argc, char* args[]) {
 }
 
 void test() {
+	int i;
+	int c[10] = { 1,2,3,4,5,6,7,8,9,0 };
+	int a[5];
+	memcpy(a, c, sizeof(*a) * 5);
+	for (i = 0; i < 5; i++) {
+		printf("%d\n", a[i]);
+	}
 	game_body game;
 	initial(&game, NULL);
 	game.our_card[0] = 15;
 	print_board(game);
 	int able[2][40][2][2] = { 0 };
-	int i;
+	
 	for (i = 0; i < 40; i++) {
 		int j;
 		for (j = 0; j < 4; j++) {

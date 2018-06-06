@@ -1,3 +1,3 @@
-Use Ox
-Start (4,3)
-End (5,3)
+Use Horse
+Start (1,2)
+End (1,3)
